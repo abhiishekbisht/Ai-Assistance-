@@ -219,9 +219,6 @@ def select_function(function_type):
         'summarize': {'name': 'Summarize Text', 'icon': '📝', 'description': 'Summarize articles, documents, or any text content'},
         'creative': {'name': 'Generate Creative Content', 'icon': '✨', 'description': 'Create stories, poems, essays, or creative content'},
         'advice': {'name': 'Provide Advice', 'icon': '💡', 'description': 'Get helpful advice and tips on various topics'},
-        'analyze': {'name': 'Analyze Text', 'icon': '🔍', 'description': 'Get detailed analysis and feedback on your content'},
-        'solve': {'name': 'Solve Problems', 'icon': '🧩', 'description': 'Break down complex problems into solutions'},
-        'explain': {'name': 'Explain Concepts', 'icon': '📖', 'description': 'Understand complex topics in simple terms'}
     }
     
     if function_type not in functions:
@@ -237,9 +234,6 @@ def chat_page(function_type, prompt_style):
         'summarize': {'name': 'Summarize Text', 'icon': '📝'},
         'creative': {'name': 'Generate Creative Content', 'icon': '✨'},
         'advice': {'name': 'Provide Advice', 'icon': '💡'},
-        'analyze': {'name': 'Analyze Text', 'icon': '🔍'},
-        'solve': {'name': 'Solve Problems', 'icon': '🧩'},
-        'explain': {'name': 'Explain Concepts', 'icon': '📖'}
     }
     
     if function_type not in functions:
