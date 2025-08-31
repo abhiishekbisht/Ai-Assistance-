@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Assistant{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Skip to Content Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation -->
+    <nav class="nav-container">
+        <div class="nav-content">
+            <a href="{{ url_for('index') }}" class="nav-title">🤖 AI Assistant</a>
+            
+            <!-- Desktop Navigation -->
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}" class="nav-link">Chat</a>
+                <a href="{{ url_for('history') }}" class="nav-link">History</a>
+            </div>
+            
+            <!-- Mobile Navigation Toggle -->
+            <button class="mobile-nav-toggle" aria-label="Toggle mobile navigation">
+                ☰
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Menu -->
+    <div class="mobile-nav" id="mobileNav">
+        <button class="mobile-nav-close" aria-label="Close mobile navigation">×</button>
+        <div class="mobile-nav-links">
+            <a href="{{ url_for('index') }}" class="mobile-nav-link">Chat</a>
+            <a href="{{ url_for('history') }}" class="mobile-nav-link">History</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 AI Assistant. Powered by Google Gemini.</p>
+        </div>
+    </footer>
+
+    <!-- Mobile Navigation JavaScript -->
+    <script>
+        // Mobile Navigation Toggle
+        const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+        const mobileNav = document.querySelector('#mobileNav');
+        const mobileNavClose = document.querySelector('.mobile-nav-close');
+
+        function toggleMobileNav() {
+            mobileNav.classList.toggle('active');
+            document.body.style.overflow = mobileNav.classList.contains('active') ? 'hidden' : '';
+        }
+
+        function closeMobileNav() {
+            mobileNav.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        mobileNavToggle.addEventListener('click', toggleMobileNav);
+        mobileNavClose.addEventListener('click', closeMobileNav);
+
+        // Close mobile nav when clicking on a link
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', closeMobileNav);
+        });
+
+        // Close mobile nav when clicking outside
+        mobileNav.addEventListener('click', (e) => {
+            if (e.target === mobileNav) {
+                closeMobileNav();
+            }
+        });
+
+        // Close mobile nav on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+                closeMobileNav();
+            }
+        });
+
+        // Responsive behavior
+        function handleResize() {
+            if (window.innerWidth > 768) {
+                closeMobileNav();
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

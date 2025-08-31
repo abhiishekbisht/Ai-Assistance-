@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant - History{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <h2>Conversation History</h2>
+    
+    {% if conversations %}
+        <div class="conversations-list">
+            {% for conv in conversations %}
+            <div class="conversation-item">
+                <div class="conversation-header">
+                    <div class="conversation-badges">
+                        <span class="function-badge {{ conv.function_type }}">
+                            {% if conv.function_type == 'question' %}📚 Question
+                            {% elif conv.function_type == 'summarize' %}📝 Summary
+                            {% elif conv.function_type == 'creative' %}✨ Creative
+                            {% elif conv.function_type == 'advice' %}💡 Advice
+                            {% elif conv.function_type == 'analyze' %}🔍 Analysis
+                            {% elif conv.function_type == 'solve' %}🧩 Problem
+                            {% elif conv.function_type == 'explain' %}📖 Concept
+                            {% else %}{{ conv.function_type|title }}{% endif %}
+                        </span>
+                        <span class="prompt-style-badge">
+                            {% if conv.prompt_style == 0 %}Standard
+                            {% elif conv.prompt_style == 1 %}Detailed
+                            {% elif conv.prompt_style == 2 %}Advanced
+                            {% else %}Style {{ conv.prompt_style }}{% endif %}
+                        </span>
+                    </div>
+                    <span class="timestamp">{{ conv.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                
+                <div class="conversation-content">
+                    <div class="user-input">
+                        <strong>You:</strong> {{ conv.user_input }}
+                    </div>
+                    <div class="ai-response">
+                        <strong>AI:</strong> {{ conv.ai_response }}
+                    </div>
+                </div>
+                
+                {% if conv.feedback_rating %}
+                <div class="feedback-display">
+                    <span class="feedback-rating {{ conv.feedback_rating }}">
+                        {% if conv.feedback_rating == 'helpful' %}👍 Helpful
+                        {% else %}👎 Not Helpful
+                        {% endif %}
+                    </span>
+                    {% if conv.feedback_comment %}
+                    <p class="feedback-comment">Comment: {{ conv.feedback_comment }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-history">
+            <p>No conversations yet. <a href="{{ url_for('index') }}">Start chatting!</a></p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}{{ function_info.name }} - Prompt Style Selection{% endblock %}
+
+{% block content %}
+<div class="style-selection-container">
+    <div class="function-header">
+        <div class="function-info">
+            <div class="function-icon-large">{{ function_info.icon }}</div>
+            <div class="function-details">
+                <h1>{{ function_info.name }}</h1>
+                <p>{{ function_info.description }}</p>
+            </div>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-btn">← Back to Functions</a>
+    </div>
+    
+    <div class="style-selection">
+        <h2>Choose Your Prompt Style</h2>
+        <p>Each style will give you a different approach to your request</p>
+        
+        <div class="style-cards">
+            <a href="{{ url_for('chat_page', function_type=function_type, prompt_style=0) }}" class="style-card compact">
+                <h3>Standard</h3>
+                <p>Balanced, professional responses that get straight to the point</p>
+                <div class="style-features">
+                    <span class="feature">Professional</span>
+                    <span class="feature">Concise</span>
+                    <span class="feature">Balanced</span>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('chat_page', function_type=function_type, prompt_style=1) }}" class="style-card compact">
+                <h3>Detailed</h3>
+                <p>In-depth, educational approach with examples and explanations</p>
+                <div class="style-features">
+                    <span class="feature">Educational</span>
+                    <span class="feature">Examples</span>
+                    <span class="feature">Thorough</span>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('chat_page', function_type=function_type, prompt_style=2) }}" class="style-card compact">
+                <h3>Advanced</h3>
+                <p>Expert-level, comprehensive analysis with multiple perspectives</p>
+                <div class="style-features">
+                    <span class="feature">Expert</span>
+                    <span class="feature">Comprehensive</span>
+                    <span class="feature">Multi-perspective</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant - Function Selection{% endblock %}
+{% block content %}
+<div class="function-selection-container">
+    <div class="welcome-header">
+        <h1>AI Assistant</h1>
+        <p>Choose a function to get started with your AI-powered tasks</p>
+    </div>
+    <div class="functions-row">
+        <a href="{{ url_for('select_function', function_type='question') }}" class="function-card compact">
+            <h3>Answer Questions</h3>
+            <p>Get factual answers to your questions</p>
+        </a>
+        <a href="{{ url_for('select_function', function_type='summarize') }}" class="function-card compact">
+            <h3>Summarize Text</h3>
+            <p>Summarize articles or documents</p>
+        </a>
+        <a href="{{ url_for('select_function', function_type='creative') }}" class="function-card compact">
+            <h3>Generate Creative Content</h3>
+            <p>Create stories, poems, or essays</p>
+        </a>
+        <a href="{{ url_for('select_function', function_type='advice') }}" class="function-card compact">
+            <h3>Provide Advice</h3>
+            <p>Get helpful advice and tips</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

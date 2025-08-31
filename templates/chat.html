@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}{{ function_info.name }} - {{ prompt_style_info.name }} Style{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="chat-info">
+            <div class="function-badge {{ function_type }}">
+                {{ function_info.icon }} {{ function_info.name }}
+            </div>
+            <div class="style-badge">
+                {{ prompt_style_info.name }} Style
+            </div>
+        </div>
+        <div class="chat-actions">
+            <button class="new-chat-btn" onclick="startNewChat()">🆕 New Chat</button>
+            <button class="clear-history-btn" onclick="clearChatHistory()">🗑️ Clear History</button>
+            <a href="{{ url_for('select_function', function_type=function_type) }}" class="back-btn">← Change Style</a>
+            <a href="{{ url_for('index') }}" class="back-btn">← New Function</a>
+        </div>
+    </div>
+    
+    <div class="chat-box" id="chatBox">
+        <!-- Chat History Container -->
+        <div class="chat-history" id="chatHistory">
+            <!-- Previous messages will be loaded here -->
+        </div>
+        
+        <!-- New Messages Container -->
+        <div class="new-messages" id="newMessages">
+            <!-- New messages will be added here -->
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea 
+                id="userInput" 
+                placeholder="Type your message here..." 
+                rows="3"
+            ></textarea>
+            <button id="sendBtn" class="send-btn">Send 📤</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentFunction = '{{ function_type }}';
+let currentPromptStyle = parseInt('{{ prompt_style }}');
+let currentConversationId = null;
+
+// Load chat history when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadChatHistory();
+    
+    // Add scroll to bottom button functionality
+    setupScrollToBottom();
+});
+
+// Setup scroll to bottom functionality
+function setupScrollToBottom() {
+    const chatBox = document.getElementById('chatBox');
+    const scrollToBottomBtn = document.createElement('button');
+    scrollToBottomBtn.className = 'scroll-to-bottom-btn';
+    scrollToBottomBtn.innerHTML = '⬇️';
+    scrollToBottomBtn.title = 'Scroll to bottom';
+    scrollToBottomBtn.onclick = () => {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    };
+    
+    // Add button to chat container
+    document.querySelector('.chat-container').appendChild(scrollToBottomBtn);
+    
+    // Show/hide button based on scroll position
+    chatBox.addEventListener('scroll', () => {
+        const isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 10;
+        scrollToBottomBtn.style.opacity = isAtBottom ? '0' : '1';
+        scrollToBottomBtn.style.pointerEvents = isAtBottom ? 'none' : 'auto';
+    });
+}
+
+// Load chat history from localStorage
+function loadChatHistory() {
+    const chatHistory = document.getElementById('chatHistory');
+    const historyKey = `chat_history_${currentFunction}_${currentPromptStyle}`;
+    const savedHistory = localStorage.getItem(historyKey);
+    
+    if (savedHistory) {
+        try {
+            const history = JSON.parse(savedHistory);
+            if (Array.isArray(history) && history.length > 0) {
+                history.forEach(item => {
+                    addMessageToHistory(item.sender, item.message, item.conversationId, item.timestamp, item.feedback);
+                });
+                
+                // Show history loaded message
+                const historyLoadedMsg = document.createElement('div');
+                historyLoadedMsg.className = 'history-loaded-msg';
+                historyLoadedMsg.innerHTML = `📚 Loaded ${history.length} previous messages`;
+                chatHistory.insertBefore(historyLoadedMsg, chatHistory.firstChild);
+            }
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            localStorage.removeItem(historyKey); // Clear corrupted data
+        }
+    }
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+    const historyKey = `chat_history_${currentFunction}_${currentPromptStyle}`;
+    const chatHistory = document.getElementById('chatHistory');
+    const newMessages = document.getElementById('newMessages');
+    
+    const history = [];
+    
+    // Get messages from chat history
+    chatHistory.querySelectorAll('.message').forEach(msg => {
+        const sender = msg.classList.contains('user-message') ? 'user' : 'assistant';
+        const message = msg.querySelector('.message-text').innerHTML.replace(/<br>/g, '\n');
+        const conversationId = msg.dataset.conversationId || null;
+        const timestamp = msg.dataset.timestamp || new Date().toISOString();
+        const feedback = msg.dataset.feedback || null;
+        
+        history.push({
+            sender: sender,
+            message: message,
+            conversationId: conversationId,
+            timestamp: timestamp,
+            feedback: feedback
+        });
+    });
+    
+    // Get messages from new messages
+    newMessages.querySelectorAll('.message').forEach(msg => {
+        const sender = msg.classList.contains('user-message') ? 'user' : 'assistant';
+        const message = msg.querySelector('.message-text').innerHTML.replace(/<br>/g, '\n');
+        const conversationId = msg.dataset.conversationId || null;
+        const timestamp = msg.dataset.timestamp || new Date().toISOString();
+        const feedback = msg.dataset.feedback || null;
+        
+        history.push({
+            sender: sender,
+            message: message,
+            conversationId: conversationId,
+            timestamp: timestamp,
+            feedback: feedback
+        });
+    });
+    
+    localStorage.setItem(historyKey, JSON.stringify(history));
+}
+
+// Add message to history (existing messages)
+function addMessageToHistory(sender, message, conversationId, timestamp, feedback) {
+    const chatHistory = document.getElementById('chatHistory');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    messageDiv.dataset.conversationId = conversationId || '';
+    messageDiv.dataset.timestamp = timestamp || '';
+    messageDiv.dataset.feedback = feedback || '';
+    
+    const avatar = sender === 'user' ? '👤' : '🤖';
+    const timeDisplay = timestamp ? new Date(timestamp).toLocaleTimeString() : '';
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+            <div class="message-text">${message.replace(/\n/g, '<br>')}</div>
+            ${timeDisplay ? `<div class="message-time">${timeDisplay}</div>` : ''}
+        </div>
+    `;
+    
+    chatHistory.appendChild(messageDiv);
+    
+    // Add feedback buttons if it's an AI message and has conversation ID
+    if (sender === 'assistant' && conversationId) {
+        addFeedbackButtons(messageDiv, conversationId);
+    }
+    
+    // Scroll to show the new message
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+// Add new message to chat
+function addMessageToChat(sender, message, isTyping = false) {
+    const newMessages = document.getElementById('newMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message ${isTyping ? 'typing' : ''}`;
+    messageDiv.dataset.timestamp = new Date().toISOString();
+    
+    const avatar = sender === 'user' ? '👤' : '🤖';
+    const timeDisplay = new Date().toLocaleTimeString();
+    
+    messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+            <div class="message-text">${message.replace(/\n/g, '<br>')}</div>
+            <div class="message-time">${timeDisplay}</div>
+        </div>
+    `;
+    
+    newMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom with smooth animation
+    const chatBox = document.getElementById('chatBox');
+    chatBox.scrollTo({
+        top: chatBox.scrollHeight,
+        behavior: 'smooth'
+    });
+    
+    return messageDiv;
+}
+
+// Send message
+function sendMessage() {
+    const input = document.getElementById('userInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessageToChat('user', message);
+    input.value = '';
+    
+    // Show typing indicator
+    const typingDiv = addMessageToChat('assistant', 'Thinking...', true);
+    
+    // Send to backend
+    fetch('/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            message: message,
+            function: currentFunction,
+            prompt_style: currentPromptStyle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Remove typing indicator
+        typingDiv.remove();
+        
+        // Add AI response
+        const responseDiv = addMessageToChat('assistant', data.response);
+        currentConversationId = data.conversation_id;
+        
+        // Add feedback buttons
+        if (currentConversationId) {
+            addFeedbackButtons(responseDiv, currentConversationId);
+        }
+        
+        // Save chat history
+        saveChatHistory();
+    })
+    .catch(error => {
+        typingDiv.remove();
+        addMessageToChat('assistant', 'Sorry, I encountered an error. Please try again.');
+        console.error('Error:', error);
+    });
+}
+
+function addFeedbackButtons(messageDiv, conversationId) {
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.className = 'feedback-container';
+    feedbackDiv.innerHTML = `
+        <p class="feedback-question">Was this response helpful?</p>
+        <div class="feedback-buttons">
+            <button class="feedback-btn helpful" onclick="submitFeedback(${conversationId}, 'helpful', this)">
+                👍 Yes
+            </button>
+            <button class="feedback-btn not-helpful" onclick="submitFeedback(${conversationId}, 'not_helpful', this)">
+                👎 No
+            </button>
+        </div>
+        <textarea class="feedback-comment" placeholder="Optional: Add a comment..." style="display: none;"></textarea>
+    `;
+    
+    messageDiv.querySelector('.message-content').appendChild(feedbackDiv);
+}
+
+function submitFeedback(conversationId, rating, button) {
+    const feedbackContainer = button.closest('.feedback-container');
+    const commentTextarea = feedbackContainer.querySelector('.feedback-comment');
+    
+    // Show comment box for not helpful feedback
+    if (rating === 'not_helpful' && commentTextarea.style.display === 'none') {
+        commentTextarea.style.display = 'block';
+        commentTextarea.focus();
+        return;
+    }
+    
+    const comment = commentTextarea.value.trim();
+    
+    fetch('/feedback', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            conversation_id: conversationId,
+            rating: rating,
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        feedbackContainer.innerHTML = `
+            <p class="feedback-thanks">✅ ${data.message}</p>
+        `;
+        
+        // Update feedback in localStorage
+        const messageDiv = feedbackContainer.closest('.message');
+        messageDiv.dataset.feedback = JSON.stringify({rating: rating, comment: comment});
+        saveChatHistory();
+    })
+    .catch(error => {
+        console.error('Error submitting feedback:', error);
+    });
+}
+
+function clearChatHistory() {
+    if (confirm('Are you sure you want to clear all chat history for this function and style?')) {
+        const historyKey = `chat_history_${currentFunction}_${currentPromptStyle}`;
+        localStorage.removeItem(historyKey);
+        document.getElementById('chatHistory').innerHTML = ''; // Clear UI
+        document.getElementById('newMessages').innerHTML = ''; // Clear new messages
+        alert('Chat history cleared!');
+    }
+}
+
+function startNewChat() {
+    if (confirm('Start a new chat session? This will clear current messages but keep history.')) {
+        // Clear only new messages, keep history
+        document.getElementById('newMessages').innerHTML = '';
+        
+        // Add welcome message for new chat
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'new-chat-welcome';
+        welcomeDiv.innerHTML = `
+            <h4>🆕 New Chat Started</h4>
+            <p>Previous chat history is preserved. Start a new conversation below.</p>
+        `;
+        document.getElementById('newMessages').appendChild(welcomeDiv);
+        
+        // Focus on input
+        document.getElementById('userInput').focus();
+    }
+}
+
+// Event listeners
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('userInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+</script>
+{% endblock %}
