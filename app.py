@@ -32,21 +32,10 @@ def init_database():
     connection = get_db_connection()
     if connection:
         cursor = connection.cursor()
-        
         # Create database if not exists
         cursor.execute("CREATE DATABASE IF NOT EXISTS ai_assistant")
         cursor.execute("USE ai_assistant")
-        
-        # Create users table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) NOT NULL UNIQUE,
-                password_hash VARCHAR(255) NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        # Create conversations table
+        # Create conversations table (no user_id)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS conversations (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,13 +43,10 @@ def init_database():
                 ai_response TEXT NOT NULL,
                 function_type VARCHAR(50) NOT NULL,
                 prompt_style INT DEFAULT 0,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                user_id INT DEFAULT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(id)
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
-        # Create feedback table
+        # Create feedback table (no user_id)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS feedback (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -68,11 +54,9 @@ def init_database():
                 rating ENUM('helpful', 'not_helpful') NOT NULL,
                 comment TEXT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                user_id INT DEFAULT NULL,
                 FOREIGN KEY (conversation_id) REFERENCES conversations(id)
             )
         """)
-        
         connection.commit()
         cursor.close()
         connection.close()
@@ -371,5 +355,20 @@ def history():
     return render_template('history.html', conversations=conversations)
 
 if __name__ == '__main__':
-    init_database()
-    app.run(debug=True, port=5002)
+    # Check essential environment variables
+    missing_env = []
+    for var in ["GEMINI_API_KEY", "DB_HOST", "DB_USER", "DB_PASS", "DB_NAME", "FLASK_SECRET_KEY"]:
+        if not os.getenv(var):
+            missing_env.append(var)
+    if missing_env:
+        print(f"Missing required environment variables: {', '.join(missing_env)}. Please set them in your deployment environment.")
+    else:
+        # Check templates/static folders
+        if not os.path.isdir("templates"):
+            print("Warning: 'templates' folder not found. Flask will not find your HTML files.")
+        if not os.path.isdir("static"):
+            print("Warning: 'static' folder not found. Flask will not find your CSS/JS files.")
+        init_database()
+        port = int(os.environ.get('PORT', 5002))
+        print(f"Starting Flask app on port {port}...")
+        app.run(debug=True, port=port)
